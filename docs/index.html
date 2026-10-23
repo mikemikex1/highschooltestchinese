@@ -579,7 +579,7 @@ body.dark .noscript-fallback { background:#30271f; border-color:var(--dark-borde
     <h1>國文課綱教學筆記</h1>
     <p class="subtitle">一課一頁：觀念教學 × 歷屆真題 × 練習詳解 × 非選評分</p>
     <p class="intro">每次只閱讀一課；左側目錄固定，手機可用上一課／下一課快速移動。</p>
-    <div class="hero-actions"><a class="button" href="核心課文精讀.html">核心課文精讀</a><button id="themeBtn">切換深色</button></div>
+    <div class="hero-actions"><nav class="primary-nav" aria-label="主要導覽"><a class="button" href="#lesson-01-view-01">課綱複習</a><a class="button" href="#mode=exam&amp;year=115&amp;group=01&amp;question=01">歷屆試題</a><a class="button" href="#supplement-a-view-01">補充教材</a></nav><a class="button" href="核心課文精讀.html">核心課文精讀</a><button id="themeBtn">切換深色</button></div>
   </div></header>
   <nav class="toolbar" aria-label="課程工具"><div class="toolbar-inner">
     <label class="search">搜尋課程或關鍵字 <input id="search" type="search" placeholder="例如：字音、推論、非選"></label>
@@ -5599,7 +5599,7 @@ body.dark .noscript-fallback { background:#30271f; border-color:var(--dark-borde
   const $ = (selector) => document.querySelector(selector);
   const lessons = Array.isArray(window.lessonData) ? window.lessonData : [];
   const nonSelection = window.nonSelectionData || {};
-  const quizState = Object.create(null);
+  const quizState = window.quizStateByQuestionId || (window.quizStateByQuestionId = Object.create(null));
   const readProgress = () => { try { return JSON.parse(localStorage.getItem('chinese-curriculum-progress') || '{}') || {}; } catch (_) { return {}; } };
   const saveProgress = (value) => { try { localStorage.setItem('chinese-curriculum-progress', JSON.stringify(value)); } catch (_) {} };
   const initialHash = location.hash.slice(1);
@@ -5701,6 +5701,7 @@ body.dark .noscript-fallback { background:#30271f; border-color:var(--dark-borde
   const renderCurrentView = () => {
     const root = $('#lesson-view-root');
     if (!root) return;
+    if (state.currentSection === 'exam') { if (window.examRuntime) window.examRuntime.renderFromHash(); else root.innerHTML = '<div class="empty-box">歷屆試題模式載入中。</div>'; return; }
     root.innerHTML = '';
     if (state.currentSection === 'supplement') { renderSupplementView(); return; }
     const lesson = lessons.find((item) => item.number === state.view) || lessons[0];
@@ -5720,6 +5721,7 @@ body.dark .noscript-fallback { background:#30271f; border-color:var(--dark-borde
   };
   const parseHashAndRender = () => {
     const hash = location.hash.slice(1);
+    if (hash.startsWith('mode=exam')) { state.currentSection = 'exam'; renderCurrentView(); return; }
     const lessonMatch = hash.match(/^lesson-(\d+)-view-(\d+)$/);
     const supplementMatch = hash.match(/^supplement(?:-([a-e]))?(?:-view-(\d+))?(?:-(texts|characters|words|knowledge|cram))?$/);
     if (lessonMatch) { const number = Number(lessonMatch[1]); const lesson = lessons.find((item) => item.number === number); const views = lesson ? viewsFor(lesson) : []; const candidate = lesson && views[Number(lessonMatch[2]) - 1]; if (candidate) { state.currentSection = 'lesson'; state.view = number; state.currentLessonId = `lesson-${String(number).padStart(2, '0')}`; state.currentViewId = candidate.id; } else { state.currentSection = 'lesson'; state.view = 1; state.currentLessonId = 'lesson-01'; state.currentViewId = 'lesson-01-view-01'; } }
@@ -5862,5 +5864,6 @@ body.dark .noscript-fallback { background:#30271f; border-color:var(--dark-borde
   $('#topBtn').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   parseHashAndRender();
 })();
-</script></body>
+</script><script src="assets/exam-mode.js"></script>
+</body>
 </html>
